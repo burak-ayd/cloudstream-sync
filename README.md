@@ -4,9 +4,24 @@ Açık kaynak, çoklu bulut destekli CloudStream senkronizasyon eklentisi.
 
 ## Özellikler
 
-- ✅ **Supabase** desteği (realtime)
-- 🔜 **Google Drive** desteği (yakında)
-- 🔜 **Firebase** desteği (yakında)
+- **✅ Tam Senkronizasyon**
+  - 📚 Favoriler (Bookmarks) - Full obje sync
+  - ▶️ Kaldığın yerden devam et (Watch positions)
+  - 🔍 Arama geçmişi
+  - 🧩 Eklentiler & depolar
+  - ⚙️ Uygulama ayarları
+
+- **☁️ Bulut Desteği**
+  - ✅ Supabase (realtime)
+  - 🔜 Google Drive (yakında)
+  - 🔜 Firebase (yakında)
+
+- **🎨 Modern UI**
+  - ScrollView ile responsive tasarım
+  - Progress bar ile loading göstergesi
+  - Renkli butonlar (Mavi/Yeşil/Kırmızı)
+  - Detaylı status mesajları
+  - Config kalıcı kaydediliyor
 
 ### Senkronize Edilen Veriler
 
@@ -73,23 +88,23 @@ CREATE POLICY "Users can manage own data"
 
 ## Kullanım
 
-1. **Buluta Yükle**: Mevcut verilerini buluta gönder (Backup)
-2. **Buluttan İndir**: ⚠️ Şu an disabled (teknik sınırlama)
-3. **Buluttan Sil**: Buluttaki tüm veriyi sil
+1. **Buluta Yükle** ⬆️: Mevcut verilerini buluta gönder
+   - Favoriler, izleme konumları, arama geçmişi, eklentiler, ayarlar
+   - Detaylı özet gösterilir (kaç adet kaydedildi)
+   
+2. **Buluttan İndir** ⬇️: Buluttaki veriyi cihaza çek
+   - Tüm veriler CloudStream'e aktarılır
+   - **⚠️ İndirdikten sonra uygulamayı yeniden başlat!**
+   
+3. **Buluttan Sil** 🗑️: Buluttaki tüm veriyi sil
 
-### ⚠️ Import Sınırlaması
+### 🎯 İpuçları
 
-**v4 itibariyle "Buluttan İndir" geçici olarak devre dışı.**
-
-**Sebep:** CloudStream'in `BookmarkedData` objesi çok fazla zorunlu parametre içeriyor (name, url, type, posterUrl, year, etc.). Bulutta sadece `id` ve `bookmarkedTime` saklanıyor, eksik verilerle obje oluşturulamıyor.
-
-**Çözüm alternatifleri:**
-1. ✅ Export çalışıyor - yedekleme yapabilirsin
-2. 🔜 Full SearchResponse objesi kaydetme (veri boyutu artacak)
-3. 🔜 CloudStream'e PR - minimal bookmark API'si
-4. 🔜 Mevcut bookmark'ları güncelleme (sadece timestamp sync)
-
-**Kullanım senaryosu:** Şimdilik sadece **backup/export** olarak kullan. Verini buluta yükle, gerektiğinde manuel referans için kullan.
+- İlk kullanımda config'i kaydet (URL, API Key, User ID)
+- Config bir kere girildiğinde kalıcı olarak saklanır
+- Buluta yükleme/indirme sırasında progress bar görünür
+- Yeşil mesaj = başarılı, kırmızı mesaj = hata
+- İndirme sonrası mutlaka yeniden başlat!
 
 ## Mimari
 
