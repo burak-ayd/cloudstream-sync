@@ -5,23 +5,25 @@ import com.cloudstreamsync.models.SyncData
 import com.lagradost.cloudstream3.utils.DataStoreHelper as CS3DataStore
 import com.google.gson.Gson
 
-// CloudStream DataStore wrapper - Full obje sync
+// CloudStream DataStore wrapper - Full sync
 object DataStoreHelper {
     private val gson = Gson()
+    private const val PREFERENCES_NAME = "rebuild_preference"
+    private const val USER_PROVIDER_API = "user_custom_sites"
     
     fun collectCurrentData(context: Context): SyncData {
         return SyncData(
             bookmarks = getAllBookmarksFullData(),
             watchPositions = getAllWatchPositions(),
-            searchHistory = emptyList(), // ponytail: search history ayrı API gerek
-            extensions = emptyList(),     // ponytail: eklenti listesi için ayrı API gerek
-            settings = emptyMap(),        // ponytail: ayarlar için ayrı API gerek
+            searchHistory = getSearchHistory(context),
+            extensions = getExtensions(context),
+            settings = getSettings(context),
             timestamp = System.currentTimeMillis()
         )
     }
     
     fun applyData(context: Context, data: SyncData) {
-        // Bookmarks import et - tam obje
+        // Bookmarks import et
         data.bookmarks.forEach { bookmarkJson ->
             try {
                 val bookmarkedData = gson.fromJson(bookmarkJson, CS3DataStore.BookmarkedData::class.java)
@@ -44,12 +46,26 @@ object DataStoreHelper {
                 // Skip invalid entries
             }
         }
+        
+        // Search history import et
+        if (data.searchHistory.isNotEmpty()) {
+            setSearchHistory(context, data.searchHistory)
+        }
+        
+        // Extensions import et
+        if (data.extensions.isNotEmpty()) {
+            setExtensions(context, data.extensions)
+        }
+        
+        // Settings import et
+        if (data.settings.isNotEmpty()) {
+            setSettings(context, data.settings)
+        }
     }
     
     private fun getAllBookmarksFullData(): List<String> {
         return try {
             val bookmarks = CS3DataStore.getAllBookmarkedData()
-            // Tam BookmarkedData objesini JSON olarak kaydet
             bookmarks.map { gson.toJson(it) }
         } catch (e: Exception) {
             emptyList()
@@ -78,6 +94,91 @@ object DataStoreHelper {
             positions
         } catch (e: Exception) {
             emptyMap()
+        }
+    }
+    
+    private fun getSearchHistory(context: Context): List<String> {
+        return try {
+            val prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+            val searchHistoryJson = prefs.getString("search_history", null)
+            if (searchHistoryJson != null) {
+                gson.fromJson(searchHistoryJson, Array<String>::class.java)?.toList() ?: emptyList()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    private fun setSearchHistory(context: Context, history: List<String>) {
+        try {
+            val prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+            prefs.edit().putString("search_history", gson.toJson(history)).apply()
+        } catch (e: Exception) {
+            // Ignore
+        }
+    }
+    
+    private fun getExtensions(context: Context): List<String> {
+        return try {
+            val prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+            val extensionsJson = prefs.getString(USER_PROVIDER_API, null)
+            if (extensionsJson != null) {
+                gson.fromJson(extensionsJson, Array<String>::class.java)?.toList() ?: emptyList()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    private fun setExtensions(context: Context, extensions: List<String>) {
+        try {
+            val prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+            prefs.edit().putString(USER_PROVIDER_API, gson.toJson(extensions)).apply()
+        } catch (e: Exception) {
+            // Ignore
+        }
+    }
+    
+    private fun getSettings(context: Context): Map<String, String> {
+        return try {
+            val prefs = context.getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)
+            val allPrefs = prefs.all
+            val settings = mutableMapOf<String, String>()
+            
+            for (entry in allPrefs.entries) {
+                val key = entry.key
+                val value = entry.value
+                when (value) {
+                    is String -> settings[key] = value
+                    is Boolean -> settings[key] = value.toString()
+                    is Int -> settings[key] = value.toString()
+                    is Long -> settings[key] = value.toString()
+                    is Float -> settings[key] = value.toString()
+                }
+            }
+            
+            settings
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+    
+    private fun setSettings(context: Context, settings: Map<String, String>) {
+        try {
+            val prefs = context.getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)
+            val editor = prefs.edit()
+            
+            for (entry in settings.entries) {
+                editor.putString(entry.key, entry.value)
+            }
+            
+            editor.apply()
+        } catch (e: Exception) {
+            // Ignore
         }
     }
 }
