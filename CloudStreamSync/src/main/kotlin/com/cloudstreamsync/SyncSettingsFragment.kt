@@ -126,18 +126,17 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
             try {
                 SyncManager.setProvider(CloudProviderType.SUPABASE, getConfig())
                 
-                // ponytail: CloudStream internal API'den veri çekilecek, şimdilik mock
-                val mockData = SyncData(
-                    bookmarks = listOf("mock1", "mock2"),
-                    watchPositions = mapOf("movie1" to 12345L),
-                    searchHistory = listOf("search1"),
-                    timestamp = System.currentTimeMillis()
-                )
+                // Gerçek CloudStream verisini topla
+                val currentData = DataStoreHelper.collectCurrentData(requireContext())
                 
-                val result = SyncManager.uploadData(mockData)
+                val result = SyncManager.uploadData(currentData)
                 withContext(Dispatchers.Main) {
                     result.fold(
-                        onSuccess = { statusText.text = "✓ Yükleme başarılı!" },
+                        onSuccess = { 
+                            statusText.text = "✓ Yükleme başarılı!\n" +
+                                "Favoriler: ${currentData.bookmarks.size}\n" +
+                                "İzleme konumları: ${currentData.watchPositions.size}"
+                        },
                         onFailure = { statusText.text = "✗ Hata: ${it.message}" }
                     )
                 }
@@ -159,8 +158,14 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
                 
                 withContext(Dispatchers.Main) {
                     result.fold(
-                        onSuccess = { 
-                            statusText.text = "✓ İndirme başarılı! ${it.bookmarks.size} bookmark"
+                        onSuccess = { data ->
+                            // Veriyi CloudStream'e uygula
+                            DataStoreHelper.applyData(requireContext(), data)
+                            
+                            statusText.text = "✓ İndirme başarılı!\n" +
+                                "Favoriler: ${data.bookmarks.size}\n" +
+                                "İzleme konumları: ${data.watchPositions.size}\n" +
+                                "Arama geçmişi: ${data.searchHistory.size}"
                         },
                         onFailure = { statusText.text = "✗ Hata: ${it.message}" }
                     )

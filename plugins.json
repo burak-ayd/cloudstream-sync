@@ -9,7 +9,7 @@
             "burak-ayd"
         ],
         "description": "Multi-cloud sync for bookmarks, watch history, search history, extensions & settings. Supports Supabase (GDrive & Firebase coming soon).",
-        "fileSize": 19403,
+        "fileSize": 20863,
         "repositoryUrl": "https://github.com/burak-ayd/cloudstream-sync",
         "language": "tr",
         "tvTypes": [],
