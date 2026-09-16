@@ -78,7 +78,7 @@ git push origin master
 Kullanıcılar şu linki tarayıcıda açacak:
 
 ```
-https://raw.githubusercontent.com/USER/cloudstream-sync/master/repo.json
+https://raw.githubusercontent.com/burak-ayd/cloudstream-sync/master/repo.json
 ```
 
 CloudStream otomatik olarak açacak ve depoyu yükleyecek.
