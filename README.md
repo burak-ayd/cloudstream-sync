@@ -73,9 +73,23 @@ CREATE POLICY "Users can manage own data"
 
 ## Kullanım
 
-1. **Buluta Yükle**: Mevcut verilerini buluta gönder
-2. **Buluttan İndir**: Buluttaki veriyi cihaza çek
+1. **Buluta Yükle**: Mevcut verilerini buluta gönder (Backup)
+2. **Buluttan İndir**: ⚠️ Şu an disabled (teknik sınırlama)
 3. **Buluttan Sil**: Buluttaki tüm veriyi sil
+
+### ⚠️ Import Sınırlaması
+
+**v4 itibariyle "Buluttan İndir" geçici olarak devre dışı.**
+
+**Sebep:** CloudStream'in `BookmarkedData` objesi çok fazla zorunlu parametre içeriyor (name, url, type, posterUrl, year, etc.). Bulutta sadece `id` ve `bookmarkedTime` saklanıyor, eksik verilerle obje oluşturulamıyor.
+
+**Çözüm alternatifleri:**
+1. ✅ Export çalışıyor - yedekleme yapabilirsin
+2. 🔜 Full SearchResponse objesi kaydetme (veri boyutu artacak)
+3. 🔜 CloudStream'e PR - minimal bookmark API'si
+4. 🔜 Mevcut bookmark'ları güncelleme (sadece timestamp sync)
+
+**Kullanım senaryosu:** Şimdilik sadece **backup/export** olarak kullan. Verini buluta yükle, gerektiğinde manuel referans için kullan.
 
 ## Mimari
 
