@@ -32,21 +32,23 @@ Açık kaynak, çoklu bulut destekli CloudStream senkronizasyon eklentisi.
 
 ### 2. Tablo Oluştur
 
-SQL Editor'de çalıştır:
+**Tam SQL komutları için:** [`supabase-setup.sql`](supabase-setup.sql) dosyasını aç ve tüm komutları Supabase SQL Editor'de çalıştır.
+
+**Hızlı kurulum (minimum):**
 
 ```sql
 CREATE TABLE cloudstream_sync (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id TEXT NOT NULL,
   data JSONB NOT NULL,
-  timestamp BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
-  created_at TIMESTAMP DEFAULT NOW(),
+  timestamp BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)
 );
 
--- Index
-CREATE INDEX idx_user_id ON cloudstream_sync(user_id);
-CREATE INDEX idx_timestamp ON cloudstream_sync(timestamp DESC);
+CREATE INDEX idx_cloudstream_user_id ON cloudstream_sync(user_id);
+CREATE INDEX idx_cloudstream_timestamp ON cloudstream_sync(timestamp DESC);
 ```
 
 ### 3. RLS (Row Level Security) - Opsiyonel
