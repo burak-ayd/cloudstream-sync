@@ -6,7 +6,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
 
-version = 1
+version = 2
 
 cloudstream {
     description = "Multi-cloud sync for bookmarks, watch history, search history, extensions & settings"

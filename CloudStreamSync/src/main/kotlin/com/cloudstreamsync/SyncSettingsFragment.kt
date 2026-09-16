@@ -60,6 +60,9 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
         addConfigField("Tablo Adı (opsiyonel)", "supabase_table")
         addConfigField("User ID", "supabase_user")
         
+        // Kaydedilmiş config'i yükle
+        loadSavedConfig()
+        
         // Upload butonu
         uploadBtn = Button(requireContext()).apply {
             text = "Buluta Yükle"
@@ -103,6 +106,22 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
         })
     }
     
+    private fun loadSavedConfig() {
+        val savedConfig = ConfigManager.loadConfig(requireContext())
+        
+        for (i in 0 until configContainer.childCount) {
+            val view = configContainer.getChildAt(i)
+            if (view is EditText && view.tag != null) {
+                when (view.tag.toString()) {
+                    "supabase_url" -> view.setText(savedConfig["url"])
+                    "supabase_key" -> view.setText(savedConfig["apiKey"])
+                    "supabase_table" -> view.setText(savedConfig["table"])
+                    "supabase_user" -> view.setText(savedConfig["userId"])
+                }
+            }
+        }
+    }
+    
     private fun getConfig(): Map<String, String> {
         val config = mutableMapOf<String, String>()
         for (i in 0 until configContainer.childCount) {
@@ -111,12 +130,18 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
                 config[view.tag.toString()] = view.text.toString()
             }
         }
-        return mapOf(
+        
+        val finalConfig = mapOf(
             "url" to (config["supabase_url"] ?: ""),
             "apiKey" to (config["supabase_key"] ?: ""),
             "table" to (config["supabase_table"]?.takeIf { it.isNotEmpty() } ?: "cloudstream_sync"),
             "userId" to (config["supabase_user"] ?: "default_user")
         )
+        
+        // Config'i kaydet
+        ConfigManager.saveConfig(requireContext(), finalConfig)
+        
+        return finalConfig
     }
     
     private fun uploadData() {
