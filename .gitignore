@@ -1,0 +1,40 @@
+# Gradle
+.gradle/
+build/
+*/build/
+.gradletasknamecache
+
+# Android
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+captures/
+.externalNativeBuild
+.cxx/
+local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+secrets.properties
+keystore.properties
+*.jks
+*.keystore
+
+# CloudStream
+*.cs3
