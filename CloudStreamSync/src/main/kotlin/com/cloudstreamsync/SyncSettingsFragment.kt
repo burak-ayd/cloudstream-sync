@@ -1,13 +1,14 @@
 package com.cloudstreamsync
 
-import android.app.Dialog
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.core.view.setPadding
 import androidx.fragment.app.DialogFragment
-import com.cloudstreamsync.models.SyncData
 import com.lagradost.cloudstream3.plugins.Plugin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,93 +17,181 @@ import kotlinx.coroutines.withContext
 
 class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
     
-    private lateinit var providerSpinner: Spinner
     private lateinit var configContainer: LinearLayout
     private lateinit var uploadBtn: Button
     private lateinit var downloadBtn: Button
     private lateinit var deleteBtn: Button
     private lateinit var statusText: TextView
+    private lateinit var progressBar: ProgressBar
     
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val layout = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(40, 40, 40, 40)
-        }
-        
-        // Provider seçimi
-        layout.addView(TextView(requireContext()).apply {
-            text = "Bulut Servisi:"
-            textSize = 16f
-        })
-        
-        providerSpinner = Spinner(requireContext()).apply {
-            adapter = ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                listOf("Supabase", "Google Drive (yakında)", "Firebase (yakında)")
+        val scrollView = ScrollView(requireContext()).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
-        layout.addView(providerSpinner)
         
-        // Config alanları
+        val mainLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48)
+        }
+        
+        // Başlık
+        mainLayout.addView(TextView(requireContext()).apply {
+            text = "CloudStream Sync"
+            textSize = 24f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 32)
+        })
+        
+        // Provider başlık
+        mainLayout.addView(TextView(requireContext()).apply {
+            text = "Bulut Servisi"
+            textSize = 18f
+            setTextColor(Color.WHITE)
+            setPadding(0, 16, 0, 8)
+        })
+        
+        // Provider card
+        mainLayout.addView(LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(24, 16, 24, 16)
+            setBackgroundColor(Color.parseColor("#1E1E1E"))
+            
+            addView(TextView(requireContext()).apply {
+                text = "Supabase"
+                textSize = 16f
+                setTextColor(Color.parseColor("#4CAF50"))
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            })
+            
+            addView(TextView(requireContext()).apply {
+                text = "✓"
+                textSize = 20f
+                setTextColor(Color.parseColor("#4CAF50"))
+            })
+        })
+        
+        // Config başlık
+        mainLayout.addView(TextView(requireContext()).apply {
+            text = "Ayarlar"
+            textSize = 18f
+            setTextColor(Color.WHITE)
+            setPadding(0, 32, 0, 8)
+        })
+        
+        // Config container
         configContainer = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#1E1E1E"))
+            setPadding(24, 16, 24, 16)
         }
-        layout.addView(configContainer)
+        mainLayout.addView(configContainer)
         
-        // Supabase config
-        addConfigField("Supabase URL", "supabase_url")
-        addConfigField("API Key", "supabase_key")
-        addConfigField("Tablo Adı (opsiyonel)", "supabase_table")
-        addConfigField("User ID", "supabase_user")
+        // Config fields
+        addConfigField("Supabase URL", "supabase_url", "https://xxx.supabase.co")
+        addConfigField("API Key", "supabase_key", "eyJhbG...")
+        addConfigField("Tablo Adı", "supabase_table", "cloudstream_sync")
+        addConfigField("User ID", "supabase_user", "user_123")
         
         // Kaydedilmiş config'i yükle
         loadSavedConfig()
         
+        // Progress bar
+        progressBar = ProgressBar(requireContext()).apply {
+            visibility = View.GONE
+            setPadding(0, 24, 0, 24)
+        }
+        mainLayout.addView(progressBar)
+        
+        // İşlemler başlık
+        mainLayout.addView(TextView(requireContext()).apply {
+            text = "İşlemler"
+            textSize = 18f
+            setTextColor(Color.WHITE)
+            setPadding(0, 32, 0, 8)
+        })
+        
         // Upload butonu
         uploadBtn = Button(requireContext()).apply {
-            text = "Buluta Yükle"
+            text = "⬆ Buluta Yükle"
+            textSize = 16f
+            setBackgroundColor(Color.parseColor("#2196F3"))
+            setTextColor(Color.WHITE)
+            setPadding(32, 24, 32, 24)
             setOnClickListener { uploadData() }
         }
-        layout.addView(uploadBtn)
+        mainLayout.addView(uploadBtn)
         
         // Download butonu
         downloadBtn = Button(requireContext()).apply {
-            text = "Buluttan İndir"
+            text = "⬇ Buluttan İndir"
+            textSize = 16f
+            setBackgroundColor(Color.parseColor("#4CAF50"))
+            setTextColor(Color.WHITE)
+            setPadding(32, 24, 32, 24)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = 16 }
             setOnClickListener { downloadData() }
         }
-        layout.addView(downloadBtn)
+        mainLayout.addView(downloadBtn)
         
         // Delete butonu
         deleteBtn = Button(requireContext()).apply {
-            text = "Buluttan Sil"
+            text = "🗑 Buluttan Sil"
+            textSize = 16f
+            setBackgroundColor(Color.parseColor("#F44336"))
+            setTextColor(Color.WHITE)
+            setPadding(32, 24, 32, 24)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = 16 }
             setOnClickListener { deleteData() }
         }
-        layout.addView(deleteBtn)
+        mainLayout.addView(deleteBtn)
         
         // Status
         statusText = TextView(requireContext()).apply {
             textSize = 14f
-            setPadding(0, 20, 0, 0)
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            setPadding(0, 24, 0, 0)
         }
-        layout.addView(statusText)
+        mainLayout.addView(statusText)
         
-        return layout
+        scrollView.addView(mainLayout)
+        return scrollView
     }
     
-    private fun addConfigField(label: String, key: String) {
+    private fun addConfigField(label: String, key: String, hint: String) {
         configContainer.addView(TextView(requireContext()).apply {
             text = label
-            setPadding(0, 20, 0, 5)
+            textSize = 14f
+            setTextColor(Color.parseColor("#AAAAAA"))
+            setPadding(0, if (configContainer.childCount > 0) 16 else 0, 0, 4)
         })
         
         configContainer.addView(EditText(requireContext()).apply {
-            hint = label
+            this.hint = hint
             tag = key
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#666666"))
+            setBackgroundColor(Color.parseColor("#2A2A2A"))
+            setPadding(16)
         })
     }
     
@@ -144,8 +233,17 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
         return finalConfig
     }
     
+    private fun setLoading(isLoading: Boolean) {
+        uploadBtn.isEnabled = !isLoading
+        downloadBtn.isEnabled = !isLoading
+        deleteBtn.isEnabled = !isLoading
+        progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+    
     private fun uploadData() {
         statusText.text = "Yükleniyor..."
+        statusText.setTextColor(Color.WHITE)
+        setLoading(true)
         
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -160,14 +258,24 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
                         onSuccess = { 
                             statusText.text = "✓ Yükleme başarılı!\n" +
                                 "Favoriler: ${currentData.bookmarks.size}\n" +
-                                "İzleme konumları: ${currentData.watchPositions.size}"
+                                "İzleme konumları: ${currentData.watchPositions.size}\n" +
+                                "Arama geçmişi: ${currentData.searchHistory.size}\n" +
+                                "Eklentiler: ${currentData.extensions.size}\n" +
+                                "Ayarlar: ${currentData.settings.size}"
+                            statusText.setTextColor(Color.parseColor("#4CAF50"))
                         },
-                        onFailure = { statusText.text = "✗ Hata: ${it.message}" }
+                        onFailure = { 
+                            statusText.text = "✗ Hata: ${it.message}"
+                            statusText.setTextColor(Color.parseColor("#F44336"))
+                        }
                     )
+                    setLoading(false)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     statusText.text = "✗ Hata: ${e.message}"
+                    statusText.setTextColor(Color.parseColor("#F44336"))
+                    setLoading(false)
                 }
             }
         }
@@ -175,6 +283,8 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
     
     private fun downloadData() {
         statusText.text = "İndiriliyor..."
+        statusText.setTextColor(Color.WHITE)
+        setLoading(true)
         
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -190,14 +300,24 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
                             statusText.text = "✓ İndirme başarılı!\n" +
                                 "Favoriler: ${data.bookmarks.size}\n" +
                                 "İzleme konumları: ${data.watchPositions.size}\n" +
-                                "Arama geçmişi: ${data.searchHistory.size}"
+                                "Arama geçmişi: ${data.searchHistory.size}\n" +
+                                "Eklentiler: ${data.extensions.size}\n" +
+                                "Ayarlar: ${data.settings.size}\n\n" +
+                                "Uygulamayı yeniden başlatın!"
+                            statusText.setTextColor(Color.parseColor("#4CAF50"))
                         },
-                        onFailure = { statusText.text = "✗ Hata: ${it.message}" }
+                        onFailure = { 
+                            statusText.text = "✗ Hata: ${it.message}"
+                            statusText.setTextColor(Color.parseColor("#F44336"))
+                        }
                     )
+                    setLoading(false)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     statusText.text = "✗ Hata: ${e.message}"
+                    statusText.setTextColor(Color.parseColor("#F44336"))
+                    setLoading(false)
                 }
             }
         }
@@ -205,6 +325,8 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
     
     private fun deleteData() {
         statusText.text = "Siliniyor..."
+        statusText.setTextColor(Color.WHITE)
+        setLoading(true)
         
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -213,13 +335,22 @@ class SyncSettingsFragment(private val plugin: Plugin) : DialogFragment() {
                 
                 withContext(Dispatchers.Main) {
                     result.fold(
-                        onSuccess = { statusText.text = "✓ Silme başarılı!" },
-                        onFailure = { statusText.text = "✗ Hata: ${it.message}" }
+                        onSuccess = { 
+                            statusText.text = "✓ Silme başarılı!"
+                            statusText.setTextColor(Color.parseColor("#4CAF50"))
+                        },
+                        onFailure = { 
+                            statusText.text = "✗ Hata: ${it.message}"
+                            statusText.setTextColor(Color.parseColor("#F44336"))
+                        }
                     )
+                    setLoading(false)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     statusText.text = "✗ Hata: ${e.message}"
+                    statusText.setTextColor(Color.parseColor("#F44336"))
+                    setLoading(false)
                 }
             }
         }
