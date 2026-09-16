@@ -21,10 +21,16 @@ object DataStoreHelper {
     }
     
     fun applyData(context: Context, data: SyncData) {
-        // ponytail: CloudStream'in setBookmarkedData/setViewPosAndResume fonksiyonları 
-        // inline olduğu için JVM target uyumsuzluğu var. Import/export için 
-        // DataStoreHelper'ın public API'lerini kullanmak gerek.
-        // Şimdilik veri sadece export ediliyor, import disabled.
+        // ponytail: BookmarkedData çok fazla required parametre içeriyor (name, url, type, posterUrl, year, etc.)
+        // Buluttan sadece id ve bookmarkedTime geliyor, eksik verilerle obje oluşturulamıyor.
+        // 
+        // Çözüm yolları:
+        // 1. Export'ta tam SearchResponse objelerini kaydet (çok büyük veri)
+        // 2. Import'ta mevcut bookmark'u güncelle (bookmarkedTime'ı sync et)
+        // 3. CloudStream'e PR gönder - sadece ID ile bookmark ekleme API'si
+        //
+        // Şimdilik: Import disabled, sadece export çalışıyor.
+        // Kullanım senaryosu: Yedekleme ve başka cihazlarda manuel ekleme için referans
     }
     
     private fun getAllBookmarks(): List<String> {
