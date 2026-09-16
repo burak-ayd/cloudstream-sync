@@ -2,14 +2,14 @@
     {
         "url": "https://raw.githubusercontent.com/burak-ayd/cloudstream-sync/master/CloudStreamSync.cs3",
         "status": 1,
-        "version": 7,
+        "version": 8,
         "name": "CloudStreamSync",
         "internalName": "CloudStreamSync",
         "authors": [
             "burak-ayd"
         ],
-        "description": "Complete sync solution: bookmarks, watch history, search history, extensions & settings. Modern UI with progress indicators. Full import/export!",
-        "fileSize": 25382,
+        "description": "Complete sync solution: bookmarks, watch history, search history, extensions & settings. Fixed: Settings import bugfix, debug logging.",
+        "fileSize": 26027,
         "repositoryUrl": "https://github.com/burak-ayd/cloudstream-sync",
         "language": "tr",
         "tvTypes": [],

@@ -24,28 +24,35 @@ object DataStoreHelper {
     
     fun applyData(context: Context, data: SyncData) {
         // Bookmarks import et
+        var successfulBookmarks = 0
         data.bookmarks.forEach { bookmarkJson ->
             try {
                 val bookmarkedData = gson.fromJson(bookmarkJson, CS3DataStore.BookmarkedData::class.java)
                 if (bookmarkedData != null && bookmarkedData.id != null) {
                     CS3DataStore.setBookmarkedData(bookmarkedData.id, bookmarkedData)
+                    successfulBookmarks++
                 }
             } catch (e: Exception) {
                 // Skip invalid entries
+                android.util.Log.e("CloudStreamSync", "Bookmark import error: ${e.message}")
             }
         }
+        android.util.Log.d("CloudStreamSync", "Imported $successfulBookmarks/${data.bookmarks.size} bookmarks")
         
         // Watch positions import et
+        var successfulPositions = 0
         data.watchPositions.forEach { (idStr, position) ->
             try {
                 val id = idStr.toIntOrNull()
                 if (id != null && position > 0) {
                     CS3DataStore.setViewPos(id, position, 0L)
+                    successfulPositions++
                 }
             } catch (e: Exception) {
-                // Skip invalid entries
+                android.util.Log.e("CloudStreamSync", "Watch position import error: ${e.message}")
             }
         }
+        android.util.Log.d("CloudStreamSync", "Imported $successfulPositions/${data.watchPositions.size} watch positions")
         
         // Search history import et
         if (data.searchHistory.isNotEmpty()) {
@@ -173,7 +180,22 @@ object DataStoreHelper {
             val editor = prefs.edit()
             
             for (entry in settings.entries) {
-                editor.putString(entry.key, entry.value)
+                val key = entry.key
+                val value = entry.value
+                
+                // Type'a göre doğru şekilde kaydet
+                try {
+                    when {
+                        value == "true" || value == "false" -> editor.putBoolean(key, value.toBoolean())
+                        value.toIntOrNull() != null -> editor.putInt(key, value.toInt())
+                        value.toLongOrNull() != null -> editor.putLong(key, value.toLong())
+                        value.toFloatOrNull() != null -> editor.putFloat(key, value.toFloat())
+                        else -> editor.putString(key, value)
+                    }
+                } catch (e: Exception) {
+                    // Fallback: String olarak kaydet
+                    editor.putString(key, value)
+                }
             }
             
             editor.apply()
