@@ -2,14 +2,14 @@
     {
         "url": "https://raw.githubusercontent.com/burak-ayd/cloudstream-sync/master/CloudStreamSync.cs3",
         "status": 1,
-        "version": 4,
+        "version": 5,
         "name": "CloudStreamSync",
         "internalName": "CloudStreamSync",
         "authors": [
             "burak-ayd"
         ],
-        "description": "Multi-cloud sync for bookmarks, watch history, search history, extensions & settings. Supports Supabase (GDrive & Firebase coming soon). Note: Import currently disabled due to CloudStream API limitations.",
-        "fileSize": 22241,
+        "description": "Multi-cloud sync for bookmarks & watch history. Full import/export working! Supports Supabase (GDrive & Firebase coming soon).",
+        "fileSize": 22673,
         "repositoryUrl": "https://github.com/burak-ayd/cloudstream-sync",
         "language": "tr",
         "tvTypes": [],

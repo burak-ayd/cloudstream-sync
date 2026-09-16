@@ -5,13 +5,13 @@ import com.cloudstreamsync.models.SyncData
 import com.lagradost.cloudstream3.utils.DataStoreHelper as CS3DataStore
 import com.google.gson.Gson
 
-// CloudStream DataStore wrapper - DataStoreHelper'ın public fonksiyonlarını kullanıyor
+// CloudStream DataStore wrapper - Full obje sync
 object DataStoreHelper {
     private val gson = Gson()
     
     fun collectCurrentData(context: Context): SyncData {
         return SyncData(
-            bookmarks = getAllBookmarks(),
+            bookmarks = getAllBookmarksFullData(),
             watchPositions = getAllWatchPositions(),
             searchHistory = emptyList(), // ponytail: search history ayrı API gerek
             extensions = emptyList(),     // ponytail: eklenti listesi için ayrı API gerek
@@ -21,28 +21,36 @@ object DataStoreHelper {
     }
     
     fun applyData(context: Context, data: SyncData) {
-        // ponytail: BookmarkedData çok fazla required parametre içeriyor (name, url, type, posterUrl, year, etc.)
-        // Buluttan sadece id ve bookmarkedTime geliyor, eksik verilerle obje oluşturulamıyor.
-        // 
-        // Çözüm yolları:
-        // 1. Export'ta tam SearchResponse objelerini kaydet (çok büyük veri)
-        // 2. Import'ta mevcut bookmark'u güncelle (bookmarkedTime'ı sync et)
-        // 3. CloudStream'e PR gönder - sadece ID ile bookmark ekleme API'si
-        //
-        // Şimdilik: Import disabled, sadece export çalışıyor.
-        // Kullanım senaryosu: Yedekleme ve başka cihazlarda manuel ekleme için referans
+        // Bookmarks import et - tam obje
+        data.bookmarks.forEach { bookmarkJson ->
+            try {
+                val bookmarkedData = gson.fromJson(bookmarkJson, CS3DataStore.BookmarkedData::class.java)
+                if (bookmarkedData != null && bookmarkedData.id != null) {
+                    CS3DataStore.setBookmarkedData(bookmarkedData.id, bookmarkedData)
+                }
+            } catch (e: Exception) {
+                // Skip invalid entries
+            }
+        }
+        
+        // Watch positions import et
+        data.watchPositions.forEach { (idStr, position) ->
+            try {
+                val id = idStr.toIntOrNull()
+                if (id != null && position > 0) {
+                    CS3DataStore.setViewPos(id, position, 0L)
+                }
+            } catch (e: Exception) {
+                // Skip invalid entries
+            }
+        }
     }
     
-    private fun getAllBookmarks(): List<String> {
+    private fun getAllBookmarksFullData(): List<String> {
         return try {
             val bookmarks = CS3DataStore.getAllBookmarkedData()
-            bookmarks.map { bookmark ->
-                gson.toJson(mapOf(
-                    "id" to bookmark.id,
-                    "name" to (bookmark.apiName ?: ""),
-                    "bookmarkedTime" to bookmark.bookmarkedTime
-                ))
-            }
+            // Tam BookmarkedData objesini JSON olarak kaydet
+            bookmarks.map { gson.toJson(it) }
         } catch (e: Exception) {
             emptyList()
         }
@@ -57,7 +65,6 @@ object DataStoreHelper {
                 try {
                     val resume = CS3DataStore.getLastWatched(id)
                     if (resume != null) {
-                        // Resume sadece metadata, gerçek position VIDEO_POS_DUR'da
                         val viewPos = CS3DataStore.getViewPos(resume.episodeId ?: id)
                         if (viewPos != null) {
                             positions[id.toString()] = viewPos.position
