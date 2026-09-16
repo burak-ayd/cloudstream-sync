@@ -36,5 +36,5 @@ keystore.properties
 *.jks
 *.keystore
 
-# CloudStream
-*.cs3
+# CloudStream (build artifacts)
+CloudStreamSync/build/*.cs3

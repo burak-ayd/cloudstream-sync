@@ -1,0 +1,8 @@
+{
+    "name": "CloudStream Sync Repository",
+    "description": "Multi-cloud sync plugin for CloudStream",
+    "manifestVersion": 1,
+    "pluginLists": [
+        "https://raw.githubusercontent.com/burak-ayd/cloudstream-sync/master/plugins.json"
+    ]
+}
