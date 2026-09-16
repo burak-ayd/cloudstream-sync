@@ -2,14 +2,14 @@
     {
         "url": "https://raw.githubusercontent.com/burak-ayd/cloudstream-sync/master/CloudStreamSync.cs3",
         "status": 1,
-        "version": 2,
+        "version": 3,
         "name": "CloudStreamSync",
         "internalName": "CloudStreamSync",
         "authors": [
             "burak-ayd"
         ],
         "description": "Multi-cloud sync for bookmarks, watch history, search history, extensions & settings. Supports Supabase (GDrive & Firebase coming soon).",
-        "fileSize": 21810,
+        "fileSize": 22239,
         "repositoryUrl": "https://github.com/burak-ayd/cloudstream-sync",
         "language": "tr",
         "tvTypes": [],

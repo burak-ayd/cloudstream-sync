@@ -1,82 +1,70 @@
 package com.cloudstreamsync
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.cloudstreamsync.models.SyncData
+import com.lagradost.cloudstream3.utils.DataStoreHelper as CS3DataStore
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 
-// ponytail: CloudStream DataStore wrapper - gerçek API entegrasyonu için genişlet
+// CloudStream DataStore wrapper - DataStoreHelper'ın public fonksiyonlarını kullanıyor
 object DataStoreHelper {
-    private const val PREFS_NAME = "CloudstreamDataStore"
-    private const val KEY_BOOKMARKS = "bookmarked_anime_list"
-    private const val KEY_WATCH_POSITIONS = "VideoDownloadManager_resumeWatching"
-    private const val KEY_SEARCH_HISTORY = "search_history"
-    
     private val gson = Gson()
     
     fun collectCurrentData(context: Context): SyncData {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        
         return SyncData(
-            bookmarks = getBookmarks(prefs),
-            watchPositions = getWatchPositions(prefs),
-            searchHistory = getSearchHistory(prefs),
-            extensions = emptyList(), // ponytail: eklenti listesi için ayrı API gerek
-            settings = emptyMap(),    // ponytail: ayarlar için ayrı API gerek
+            bookmarks = getAllBookmarks(),
+            watchPositions = getAllWatchPositions(),
+            searchHistory = emptyList(), // ponytail: search history ayrı API gerek
+            extensions = emptyList(),     // ponytail: eklenti listesi için ayrı API gerek
+            settings = emptyMap(),        // ponytail: ayarlar için ayrı API gerek
             timestamp = System.currentTimeMillis()
         )
     }
     
     fun applyData(context: Context, data: SyncData) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val editor = prefs.edit()
-        
-        // Bookmarks
-        if (data.bookmarks.isNotEmpty()) {
-            editor.putString(KEY_BOOKMARKS, gson.toJson(data.bookmarks))
-        }
-        
-        // Watch positions
-        if (data.watchPositions.isNotEmpty()) {
-            editor.putString(KEY_WATCH_POSITIONS, gson.toJson(data.watchPositions))
-        }
-        
-        // Search history
-        if (data.searchHistory.isNotEmpty()) {
-            editor.putString(KEY_SEARCH_HISTORY, gson.toJson(data.searchHistory))
-        }
-        
-        editor.apply()
+        // ponytail: CloudStream'in setBookmarkedData/setViewPosAndResume fonksiyonları 
+        // inline olduğu için JVM target uyumsuzluğu var. Import/export için 
+        // DataStoreHelper'ın public API'lerini kullanmak gerek.
+        // Şimdilik veri sadece export ediliyor, import disabled.
     }
     
-    private fun getBookmarks(prefs: SharedPreferences): List<String> {
+    private fun getAllBookmarks(): List<String> {
         return try {
-            val json = prefs.getString(KEY_BOOKMARKS, null) ?: return emptyList()
-            val type = object : TypeToken<List<String>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
+            val bookmarks = CS3DataStore.getAllBookmarkedData()
+            bookmarks.map { bookmark ->
+                gson.toJson(mapOf(
+                    "id" to bookmark.id,
+                    "name" to (bookmark.apiName ?: ""),
+                    "bookmarkedTime" to bookmark.bookmarkedTime
+                ))
+            }
         } catch (e: Exception) {
             emptyList()
         }
     }
     
-    private fun getWatchPositions(prefs: SharedPreferences): Map<String, Long> {
+    private fun getAllWatchPositions(): Map<String, Long> {
         return try {
-            val json = prefs.getString(KEY_WATCH_POSITIONS, null) ?: return emptyMap()
-            val type = object : TypeToken<Map<String, Long>>() {}.type
-            gson.fromJson(json, type) ?: emptyMap()
+            val resumeList = CS3DataStore.getAllResumeStateIds()
+            val positions = mutableMapOf<String, Long>()
+            
+            resumeList?.forEach { id ->
+                try {
+                    val resume = CS3DataStore.getLastWatched(id)
+                    if (resume != null) {
+                        // Resume sadece metadata, gerçek position VIDEO_POS_DUR'da
+                        val viewPos = CS3DataStore.getViewPos(resume.episodeId ?: id)
+                        if (viewPos != null) {
+                            positions[id.toString()] = viewPos.position
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Skip invalid entries
+                }
+            }
+            
+            positions
         } catch (e: Exception) {
             emptyMap()
-        }
-    }
-    
-    private fun getSearchHistory(prefs: SharedPreferences): List<String> {
-        return try {
-            val json = prefs.getString(KEY_SEARCH_HISTORY, null) ?: return emptyList()
-            val type = object : TypeToken<List<String>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
         }
     }
 }
