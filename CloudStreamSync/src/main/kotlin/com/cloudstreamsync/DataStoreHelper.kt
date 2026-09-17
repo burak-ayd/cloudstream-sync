@@ -1,19 +1,19 @@
 package com.cloudstreamsync
 
 import android.content.Context
-import com.cloudstreamsync.models.SyncData
+import com.cloudstreamsync.models.LegacySyncData
 import com.cloudstreamsync.utils.SyncKeyClassifier
 import com.lagradost.cloudstream3.utils.DataStoreHelper as CS3DataStore
 import com.google.gson.Gson
 
-// CloudStream DataStore wrapper - Full sync
+// CloudStream DataStore wrapper - Legacy sync support
 object DataStoreHelper {
     private val gson = Gson()
     private const val PREFERENCES_NAME = "rebuild_preference"
     private const val USER_PROVIDER_API = "user_custom_sites"
     
-    fun collectCurrentData(context: Context): SyncData {
-        return SyncData(
+    fun collectCurrentData(context: Context): LegacySyncData {
+        return LegacySyncData(
             bookmarks = getAllBookmarksFullData(),
             watchPositions = getAllWatchPositions(),
             searchHistory = getSearchHistory(context),
@@ -23,7 +23,7 @@ object DataStoreHelper {
         )
     }
     
-    fun applyData(context: Context, data: SyncData) {
+    fun applyData(context: Context, data: LegacySyncData) {
         // Bookmarks import et
         var successfulBookmarks = 0
         data.bookmarks.forEach { bookmarkJson ->

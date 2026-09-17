@@ -2,7 +2,7 @@ package com.cloudstreamsync
 
 import com.cloudstreamsync.models.SyncData
 
-// ponytail: tek interface, GDrive/Supabase/Firebase impl'de genişlet
+// ponytail: tek interface, GDrive/Supabase impl'de genişlet
 interface CloudProvider {
     suspend fun upload(data: SyncData): Result<Unit>
     suspend fun download(): Result<SyncData>
@@ -13,6 +13,5 @@ interface CloudProvider {
 
 enum class CloudProviderType {
     GDRIVE,
-    SUPABASE,
-    FIREBASE
+    SUPABASE
 }

@@ -1,5 +1,8 @@
 package com.cloudstreamsync.utils
 
+import com.cloudstreamsync.models.SyncCategory
+import com.cloudstreamsync.models.SettingsSubCategory
+
 object SyncKeyClassifier {
     private val nonTransferableKeys = listOf(
         // Auth tokens
@@ -55,6 +58,73 @@ object SyncKeyClassifier {
         val lower = key.lowercase()
         return nonTransferableKeys.none { blocked ->
             lower.contains(blocked.lowercase())
+        }
+    }
+    
+    fun classifyKey(key: String): SyncCategory? {
+        if (!isTransferable(key)) return null
+        
+        val lower = key.lowercase()
+        
+        return when {
+            // Bookmarks
+            "result_favorites_state_data" in lower || "result_watch_state" in lower ->
+                SyncCategory.BOOKMARKS
+                
+            // Resume watching
+            "result_resume_watching" in lower || "video_pos_dur" in lower ||
+            "download_header_cache" in lower || "result_season" in lower ||
+            "result_dub" in lower || "result_episode" in lower ->
+                SyncCategory.RESUME_WATCHING
+                
+            // Search history
+            "search_history" in lower ->
+                SyncCategory.SEARCH_HISTORY
+                
+            // Extensions (skip plugins_key_local - already filtered)
+            "plugins_key" in lower || "repositories" in lower ->
+                SyncCategory.EXTENSIONS
+                
+            // Everything else is settings
+            else -> SyncCategory.SETTINGS
+        }
+    }
+    
+    fun classifySettingsKey(key: String): SettingsSubCategory {
+        val lower = key.lowercase()
+        
+        return when {
+            // Player
+            "player" in lower || "video" in lower || "buffer" in lower ||
+            "skip" in lower || "gesture" in lower || "decoder" in lower ||
+            "speed" in lower || "render" in lower || "resize" in lower ||
+            "volume" in lower || "brightness" in lower || "fit" in lower ||
+            "aspect" in lower || "play" in lower ->
+                SettingsSubCategory.PLAYER
+                
+            // Subtitles
+            "subtitle" in lower || "sub" in lower || "caption" in lower ||
+            "font" in lower || "lang" in lower ->
+                SettingsSubCategory.SUBTITLES
+                
+            // Theme
+            "theme" in lower || "dark" in lower || "color" in lower ||
+            "accent" in lower || "primary" in lower || "style" in lower ->
+                SettingsSubCategory.THEME
+                
+            // Layout
+            "layout" in lower || "view" in lower || "grid" in lower ||
+            "home" in lower || "card" in lower || "tab" in lower ||
+            "row" in lower || "show_" in lower || "homepage" in lower ||
+            "list" in lower ->
+                SettingsSubCategory.LAYOUT
+                
+            // Downloads
+            "download" in lower || "path" in lower ->
+                SettingsSubCategory.DOWNLOADS
+                
+            // General (everything else)
+            else -> SettingsSubCategory.GENERAL
         }
     }
 }
