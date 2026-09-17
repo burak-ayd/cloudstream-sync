@@ -2,6 +2,7 @@ package com.cloudstreamsync
 
 import android.content.Context
 import com.cloudstreamsync.models.SyncData
+import com.cloudstreamsync.utils.SyncKeyClassifier
 import com.lagradost.cloudstream3.utils.DataStoreHelper as CS3DataStore
 import com.google.gson.Gson
 
@@ -159,6 +160,13 @@ object DataStoreHelper {
             for (entry in allPrefs.entries) {
                 val key = entry.key
                 val value = entry.value
+                
+                // ✅ FIX: Sadece transferable key'leri sync et
+                if (!SyncKeyClassifier.isTransferable(key)) {
+                    android.util.Log.d("CloudStreamSync", "Skipping non-transferable key: $key")
+                    continue
+                }
+                
                 when (value) {
                     is String -> settings[key] = value
                     is Boolean -> settings[key] = value.toString()
@@ -182,6 +190,12 @@ object DataStoreHelper {
             for (entry in settings.entries) {
                 val key = entry.key
                 val value = entry.value
+                
+                // ✅ FIX: Sadece transferable key'leri restore et
+                if (!SyncKeyClassifier.isTransferable(key)) {
+                    android.util.Log.d("CloudStreamSync", "Skipping non-transferable key on restore: $key")
+                    continue
+                }
                 
                 // Type'a göre doğru şekilde kaydet
                 try {

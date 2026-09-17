@@ -3,6 +3,7 @@
 build/
 */build/
 .gradletasknamecache
+sync-plugin
 
 # Android
 *.apk
